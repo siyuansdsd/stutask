@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+    <title>猫咪接鱼 - 高难版</title>
+    <style>
+        :root {
+            --bg: #0e1726;
+            --accent: #22d3ee;
+            --bad: #f87171;
+            --warn: #fbbf24;
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(180deg, #0b1220, #0e1726 55%, #0b1220);
+            color: #e5e7eb;
+            font-family: system-ui, -apple-system, Segoe UI, Roboto, "PingFang SC", "Microsoft Yahei", sans-serif
+        }
+
+        .wrap {
+            width: min(92vw, 520px)
+        }
+
+        .hud {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            margin-bottom: 10px;
+            background: #0b1220dd;
+            border: 1px solid #1f2937;
+            border-radius: 16px
+        }
+
+        .stat {
+            font-weight: 800
+        }
+
+        .stat .v {
+            color: var(--accent)
+        }
+
+        .btn {
+            background: #111827;
+            border: 1px solid #1f2937;
+            color: #e5e7eb;
+            border-radius: 12px;
+            padding: 8px 12px;
+            font-weight: 800;
+            cursor: pointer
+        }
+
+        .game {
+            position: relative;
+            width: 100%;
+            height: min(75vh, 680px);
+            min-height: 480px;
+            border: 1px solid #1f2937;
+            border-radius: 18px;
+            overflow: hidden;
+            background: radial-gradient(100% 100% at 50% 0%, #0f1b2f 0%, #0b1220 70%)
+        }
+
+        .grid {
+            position: absolute;
+            inset: 0;
+            opacity: .25;
+            background:
+                linear-gradient(#1f293714 1px, transparent 1px) 0 0/100% 20px,
+                linear-gradient(90deg, #1f293714 1px, transparent 1px) 0 0/20px 100%
+        }
+
+        .floor {
+            position: absolute;
+            inset: auto 0 0 0;
+            height: 14%;
+            background: linear-gradient(0deg, rgba(34, 211, 238, .12), rgba(34, 211, 238, 0))
+        }
+
+        .cat {
+            position: absolute;
+            bottom: 8%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 56px;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px
+        }
+
+        .item {
+            position: absolute;
+            top: -60px;
+            width: 46px;
+            height: 46px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            will-change: transform, top, left
+        }
+
+        .overlay {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            background: linear-gradient(180deg, rgba(0, 0, 0, .25), rgba(0, 0, 0, .35))
+        }
+
+        .title {
+            font-weight: 900;
+            font-size: clamp(22px, 4vw, 28px)
+        }
+
+        .pill {
+            display: inline-flex;
+            gap: 8px;
+            padding: 8px 12px;
+            border: 1px solid #22d3ee50;
+            border-radius: 999px;
+            background: #22d3ee1f
+        }
+
+        .kbd {
+            font-family: ui-monospace, Menlo, monospace;
+            border: 1px solid #1f2937;
+            background: #0b1220;
+            padding: 2px 6px;
+            border-radius: 6px
+        }
+
+        .flash {
+            animation: flash .18s ease
+        }
+
+        @keyframes flash {
+            from {
+                background: #f8717140
+            }
+
+            to {
+                background: transparent
+            }
+        }
+
+        .shake {
+            animation: shake .28s ease
+        }
+
+        @keyframes shake {
+            0% {
+                transform: translateX(-50%)
+            }
+
+            25% {
+                transform: translateX(calc(-50% - 6px))
+            }
+
+            50% {
+                transform: translateX(-50%)
+            }
+
+            75% {
+                transform: translateX(calc(-50% + 6px))
+            }
+
+            100% {
+                transform: translateX(-50%)
+            }
+        }
+
+        .slow {
+            filter: hue-rotate(-25deg) brightness(1.05) drop-shadow(0 0 10px rgba(251, 191, 36, .35))
+        }
+
+        .foot {
+            opacity: .75;
+            font-size: 12px;
+            text-align: center;
+            margin-top: 6px
+        }
+    </style>
+</head>
+
+<body>
+    <div class="wrap">
+        <div class="hud">
+            <div class="stat">分数：<span id="score" class="v">0</span></div>
+            <div class="stat">关卡：<span id="level" class="v">1</span></div>
+            <div class="stat">命：<span id="lives" class="v">2</span></div>
+            <button id="toggle" class="btn">开始</button>
+        </div>
+        <div id="game" class="game" aria-label="游戏区域">
+            <div class="grid"></div>
+            <div id="intro" class="overlay">
+                <div class="title">《猫咪接鱼》— 高难版</div>
+                <div>接 🐟 加分；💣 扣 1 命；👢 减速 4 秒；<b>🪨 扣 2 命</b>！</div>
+                <div class="pill">操作：
+                    <span class="kbd">←</span><span class="kbd">→</span> 或 <span class="kbd">A</span>/<span
+                        class="kbd">D</span>；手机拖动
+                </div>
+                <button id="start" class="btn">开始游戏</button>
+                <div class="foot">每 <b>7</b> 条鱼升一关；更快的下落 + “风偏移”；偶尔双重掉落。</div>
+            </div>
+            <div id="cat" class="cat" role="img" aria-label="猫咪">🐱</div>
+            <div class="floor"></div>
+        </div>
+        <div class="foot">提示：保持居中，等节奏形成再切边抢点位。</div>
+    </div>
+
+    <script>
+        (() => {
+            // ====== 难度调参（你可以继续微调）======
+            const DIFFICULTY = {
+                initialLives: 2,
+                levelUpEvery: 7,          // 每几条鱼升一关
+                spawnEveryMs: 650,        // 初始生成间隔（越小越难）
+                fallSpeed: 200,           // 初始下落速度 px/s
+                minSpawnMs: 220,          // 生成间隔下限
+                maxFallSpeed: 520,        // 下落速度上限
+                spawnStep: 70,            // 升级时生成间隔递减
+                fallStep: 35,             // 升级时速度增加
+                slowFactor: 0.5,          // 👢 减速倍数
+                slowDuration: 4000,       // 👢 减速时长 ms
+                windMax: 70,              // 水平风偏移最大速度 px/s
+                windJitter: 40,           // 风抖动（每帧微调）px/s^2
+                doubleSpawnChance: 0.18,  // 触发双重掉落概率
+            };
+
+            const game = document.getElementById('game');
+            const catEl = document.getElementById('cat');
+            const scoreEl = document.getElementById('score');
+            const levelEl = document.getElementById('level');
+            const livesEl = document.getElementById('lives');
+            const startBtn = document.getElementById('start');
+            const toggleBtn = document.getElementById('toggle');
+            const intro = document.getElementById('intro');
+
+            const WIDTH = () => game.clientWidth;
+            const HEIGHT = () => game.clientHeight;
+
+            const state = {
+                running: false, gameOver: false,
+                score: 0, level: 1, lives: DIFFICULTY.initialLives, fishCaught: 0,
+                spawnEveryMs: DIFFICULTY.spawnEveryMs, fallSpeed: DIFFICULTY.fallSpeed,
+                catX: 0.5, catSpeed: 560,
+                slowUntil: 0, lastSpawn: 0, items: [], lastFrame: 0,
+                keys: new Set(), pointerActive: false
+            };
+
+            // 物品类型：增加“🪨”扣 2 命
+            const TYPES = [
+                { kind: 'fish', emoji: '🐟', points: +1, weight: 50 },
+                { kind: 'bomb', emoji: '💣', life: -1, weight: 25 },
+                { kind: 'boot', emoji: '👢', slow: true, weight: 12 },
+                { kind: 'rock', emoji: '🪨', life: -2, weight: 13 }, // 高伤
+            ];
+            const totalWeight = TYPES.reduce((a, t) => a + t.weight, 0);
+            const pickType = () => {
+                let r = Math.random() * totalWeight;
+                for (const t of TYPES) { if ((r -= t.weight) < 0) return t; }
+                return TYPES[0];
+            };
+
+            function reset() {
+                // 清理
+                for (const it of state.items) { it.el.remove(); }
+                state.items.length = 0;
+
+                Object.assign(state, {
+                    running: false, gameOver: false,
+                    score: 0, level: 1, lives: DIFFICULTY.initialLives, fishCaught: 0,
+                    spawnEveryMs: DIFFICULTY.spawnEveryMs,
+                    fallSpeed: DIFFICULTY.fallSpeed,
+                    catX: 0.5, slowUntil: 0, lastSpawn: 0, lastFrame: 0
+                });
+                updateHUD(); setCatX(state.catX, true);
+                game.classList.remove('flash'); catEl.classList.remove('shake', 'slow');
+            }
+
+            function updateHUD() {
+                scoreEl.textContent = state.score;
+                levelEl.textContent = state.level;
+                livesEl.textContent = state.lives;
+            }
+
+            function setCatX(ratio, clamp = true) {
+                if (clamp) {
+                    const catW = catEl.clientWidth || 56;
+                    const pad = catW / 2 / WIDTH();
+                    ratio = Math.min(1 - pad, Math.max(pad, ratio));
+                }
+                state.catX = ratio;
+                catEl.style.left = (ratio * WIDTH()) + 'px';
+            }
+
+            function spawnOnce(forceType = null) {
+                const t = forceType || pickType();
+                const el = document.createElement('div');
+                el.className = 'item';
+                el.textContent = t.emoji;
+                const w = WIDTH();
+                const x = Math.random() * (w - 46);
+                el.style.left = x + 'px';
+                game.appendChild(el);
+
+                // 初始水平风偏移速度
+                const vx = (Math.random() * 2 - 1) * DIFFICULTY.windMax;
+                state.items.push({ t, el, x, y: -56, vy: state.fallSpeed, vx });
+            }
+
+            function spawn() {
+                spawnOnce();
+                // 概率触发双重掉落（加压力）
+                if (Math.random() < DIFFICULTY.doubleSpawnChance) {
+                    // 第二个强制不是同一位置
+                    spawnOnce();
+                }
+            }
+
+            function collide(a, b) {
+                return !(a.right < b.left || a.left > b.right || a.bottom < b.top || a.top > b.bottom);
+            }
+
+            function handleCatch(item, ts) {
+                const { t } = item;
+                if (t.kind === 'fish') {
+                    state.score += t.points;
+                    state.fishCaught += 1;
+                    // 升级：每 N 条鱼
+                    if (state.fishCaught % DIFFICULTY.levelUpEvery === 0) {
+                        state.level += 1;
+                        state.fallSpeed = Math.min(DIFFICULTY.maxFallSpeed, state.fallSpeed + DIFFICULTY.fallStep);
+                        state.spawnEveryMs = Math.max(DIFFICULTY.minSpawnMs, state.spawnEveryMs - DIFFICULTY.spawnStep);
+                        flash(game, 'flash');
+                    }
+                } else if (t.kind === 'bomb' || t.kind === 'rock') {
+                    state.lives += (t.life || 0); // t.life 为负数
+                    shake(catEl); flash(game, 'flash');
+                    if (state.lives <= 0) { return gameOver(); }
+                } else if (t.kind === 'boot') {
+                    // 减速
+                    state.slowUntil = Math.max(state.slowUntil, ts + DIFFICULTY.slowDuration);
+                    catEl.classList.add('slow');
+                }
+                updateHUD();
+            }
+
+            function removeItem(item) {
+                item.el.remove();
+                const i = state.items.indexOf(item);
+                if (i >= 0) state.items.splice(i, 1);
+            }
+
+            function gameOver() {
+                state.gameOver = true;
+                state.running = false;
+                showOverlay(`
+      <div class="title">游戏结束</div>
+      <div>分数：<b style="color:var(--accent)">${state.score}</b>　关卡：<b style="color:var(--accent)">${state.level}</b></div>
+      <button class="btn" id="again">再来一局</button>
+    `);
+                document.getElementById('again').addEventListener('click', () => {
+                    hideOverlay(); reset(); startGame();
+                });
+            }
+
+            function flash(el, cls) { el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); setTimeout(() => el.classList.remove(cls), 200); }
+            function shake(el) { el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake'); setTimeout(() => el.classList.remove('shake'), 300); }
+            function showOverlay(html) { intro.innerHTML = html; intro.style.display = 'flex'; }
+            function hideOverlay() { intro.style.display = 'none'; }
+
+            function tick(ts) {
+                if (!state.running) { state.lastFrame = ts; return; }
+                const dt = Math.min(50, ts - (state.lastFrame || ts)); state.lastFrame = ts;
+
+                // 猫移动（含减速）
+                const left = state.keys.has('ArrowLeft') || state.keys.has('KeyA');
+                const right = state.keys.has('ArrowRight') || state.keys.has('KeyD');
+                let speed = state.catSpeed;
+                if (ts < state.slowUntil) { speed *= DIFFICULTY.slowFactor; } else { catEl.classList.remove('slow'); }
+                let dx = 0;
+                if (left && !right) dx = -speed * (dt / 1000);
+                if (right && !left) dx = +speed * (dt / 1000);
+                if (dx !== 0) { setCatX(state.catX + dx / WIDTH()); }
+
+                // 生成
+                if (ts - state.lastSpawn > state.spawnEveryMs) {
+                    spawn(); state.lastSpawn = ts;
+                }
+
+                // 更新下落 + 风偏移 + 碰撞
+                const catRect = catEl.getBoundingClientRect();
+                const gameRect = game.getBoundingClientRect();
+                const catBox = { left: catRect.left, right: catRect.right, top: catRect.top, bottom: catRect.bottom };
+
+                for (const item of [...state.items]) {
+                    // 加强重力 & 风：水平速度带轻微抖动
+                    const g = (state.fallSpeed + (state.level - 1) * 10);
+                    item.vy = g;
+                    // 风抖动（让轨迹不稳定）
+                    const jitter = (Math.random() * 2 - 1) * DIFFICULTY.windJitter * (dt / 1000);
+                    item.vx = Math.max(-DIFFICULTY.windMax, Math.min(DIFFICULTY.windMax, item.vx + jitter));
+
+                    item.y += item.vy * (dt / 1000);
+                    item.x += item.vx * (dt / 1000);
+
+                    // 边界回弹，避免一直飘出屏幕
+                    if (item.x < 0) { item.x = 0; item.vx = Math.abs(item.vx); }
+                    if (item.x > WIDTH() - 46) { item.x = WIDTH() - 46; item.vx = -Math.abs(item.vx); }
+
+                    item.el.style.top = item.y + 'px';
+                    item.el.style.left = item.x + 'px';
+
+                    const r = item.el.getBoundingClientRect();
+                    const itBox = { left: r.left, right: r.right, top: r.top, bottom: r.bottom };
+
+                    if (collide(catBox, itBox)) {
+                        handleCatch(item, ts);
+                        removeItem(item);
+                        continue;
+                    }
+                    if (r.top > gameRect.bottom) { removeItem(item); }
+                }
+
+                requestAnimationFrame(tick);
+            }
+
+            function startGame() { state.running = true; state.gameOver = false; toggleBtn.textContent = '暂停'; requestAnimationFrame(tick); }
+            function pauseGame() { state.running = false; toggleBtn.textContent = '继续'; }
+
+            // 事件：键盘
+            window.addEventListener('keydown', (e) => {
+                if (['ArrowLeft', 'ArrowRight', 'KeyA', 'KeyD', 'Space'].includes(e.code)) e.preventDefault();
+                if (['ArrowLeft', 'ArrowRight', 'KeyA', 'KeyD'].includes(e.code)) state.keys.add(e.code);
+                if (e.code === 'Space' && !state.gameOver) { state.running ? pauseGame() : startGame(); }
+            });
+            window.addEventListener('keyup', (e) => state.keys.delete(e.code));
+
+            // 指针与触控
+            const pointer = { startX: 0, startCat: 0 };
+            const cx = ev => ev.touches ? ev.touches[0].clientX : ev.clientX;
+            game.addEventListener('pointerdown', e => { state.pointerActive = true; pointer.startX = e.clientX; pointer.startCat = state.catX; });
+            window.addEventListener('pointermove', e => { if (!state.pointerActive) return; setCatX(pointer.startCat + (e.clientX - pointer.startX) / WIDTH()); });
+            window.addEventListener('pointerup', () => state.pointerActive = false);
+            game.addEventListener('touchstart', e => { state.pointerActive = true; pointer.startX = cx(e); pointer.startCat = state.catX; }, { passive: true });
+            game.addEventListener('touchmove', e => { if (!state.pointerActive) return; setCatX(pointer.startCat + (cx(e) - pointer.startX) / WIDTH()); }, { passive: true });
+            window.addEventListener('touchend', () => state.pointerActive = false);
+
+            // 控制按钮
+            document.getElementById('start').addEventListener('click', () => { hideOverlay(); reset(); startGame(); });
+            toggleBtn.addEventListener('click', () => { if (state.gameOver) return; state.running ? pauseGame() : startGame(); });
+
+            // 初始化
+            reset();
+            window.addEventListener('resize', () => setCatX(state.catX, true));
+        })();
+    </script>
+</body>
+
+</html>
